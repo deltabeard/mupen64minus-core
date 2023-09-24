@@ -326,16 +326,6 @@ endif
 CFLAGS += $(MINIZIP_CFLAGS)
 LDLIBS += $(MINIZIP_LDLIBS)
 
-ifeq ($(origin LIBPNG_CFLAGS) $(origin LIBPNG_LDLIBS), undefined undefined)
-  ifeq ($(shell $(PKG_CONFIG) --modversion libpng 2>/dev/null),)
-    $(error No libpng development libraries found!)
-  endif
-  LIBPNG_CFLAGS += $(shell $(PKG_CONFIG) --cflags libpng)
-  LIBPNG_LDLIBS +=  $(shell $(PKG_CONFIG) --libs libpng)
-endif
-CFLAGS += $(LIBPNG_CFLAGS)
-LDLIBS += $(LIBPNG_LDLIBS)
-
 ifeq ($(OPENCV), 1)
   # OpenCV lib
   ifeq ($(origin OPENCV_CFLAGS) $(origin OPENCV_LDLIBS), undefined undefined)
