@@ -136,18 +136,6 @@ static void EmptyFunc(void)
 // flag in the rendering callback, which told the core whether or not the current screen has been freshly redrawn since the
 // last time the callback was called.
 static void                     (*l_mainRenderCallback)(int) = NULL;
-static ptr_SetRenderingCallback   l_old1SetRenderingCallback = NULL;
-
-static void backcompat_videoRenderCallback(int unused)  // this function will be called by the video plugin as the render callback
-{
-    if (l_mainRenderCallback != NULL)
-        l_mainRenderCallback(1);  // assume screen is always freshly redrawn (otherwise screenshots won't work w/ OSD enabled)
-}
-
-static void backcompat_setRenderCallbackIntercept(void (*callback)(int))
-{
-    l_mainRenderCallback = callback;
-}
 
 static void plugin_disconnect_gfx(void)
 {
@@ -196,26 +184,11 @@ static m64p_error plugin_connect_gfx(m64p_dynlib_handle plugin_handle)
 
         /* check the version info */
         (*gfx.getVersion)(&PluginType, &PluginVersion, &APIVersion, NULL, NULL);
-        if (PluginType != M64PLUGIN_GFX || (APIVersion & 0xffff0000) != (GFX_API_VERSION & 0xffff0000))
+        if (PluginType != M64PLUGIN_GFX || APIVersion != GFX_API_VERSION )
         {
             DebugMessage(M64MSG_ERROR, "incompatible Video plugin");
             plugin_disconnect_gfx();
             return M64ERR_INCOMPATIBLE;
-        }
-
-        /* handle backwards-compatibility */
-        if (APIVersion < 0x020100)
-        {
-            DebugMessage(M64MSG_WARNING, "Fallback for Video plugin API (%02i.%02i.%02i) < 2.1.0. Screenshots may contain On Screen Display text", VERSION_PRINTF_SPLIT(APIVersion));
-            // tell the video plugin to make its rendering callback to me (it's old, and doesn't have the bScreenRedrawn flag)
-            gfx.setRenderingCallback(backcompat_videoRenderCallback);
-            l_old1SetRenderingCallback = gfx.setRenderingCallback; // save this just for future use
-            gfx.setRenderingCallback = (ptr_SetRenderingCallback) backcompat_setRenderCallbackIntercept;
-        }
-        if (APIVersion < 0x20200 || gfx.resizeVideoOutput == NULL)
-        {
-            DebugMessage(M64MSG_WARNING, "Fallback for Video plugin API (%02i.%02i.%02i) < 2.2.0. Resizable video will not work", VERSION_PRINTF_SPLIT(APIVersion));
-            gfx.resizeVideoOutput = dummyvideo_ResizeVideoOutput;
         }
 
         l_GfxAttached = 1;
