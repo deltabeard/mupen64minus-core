@@ -37,7 +37,7 @@ extern "C" {
  * This function is called to enumerate the list of Sections in the Mupen64Plus
  * configuration file. It is expected that there will be a section named "Core"
  * for core-specific configuration data, "Graphics" for common graphics options,
- * and one or more sections for each plugin library. 
+ * and one or more sections for each plugin library.
  */
 typedef m64p_error (*ptr_ConfigListSections)(void *, void (*)(void *, const char *));
 #if defined(M64P_CORE_PROTOTYPES)
@@ -58,7 +58,7 @@ EXPORT m64p_error CALL ConfigOpenSection(const char *, m64p_handle *);
 /* ConfigListParameters()
  *
  * This function is called to enumerate the list of Parameters in a given
- * Section of the Mupen64Plus configuration file. 
+ * Section of the Mupen64Plus configuration file.
  */
 typedef m64p_error (*ptr_ConfigListParameters)(m64p_handle, void *, void (*)(void *, const char *, m64p_type));
 #if defined(M64P_CORE_PROTOTYPES)
@@ -132,7 +132,7 @@ EXPORT m64p_error CALL ConfigSetParameterHelp(m64p_handle, const char *, const c
 
 /* ConfigGetParameter()
  *
- * This function retrieves the value of one of the emulator's parameters. 
+ * This function retrieves the value of one of the emulator's parameters.
  */
 typedef m64p_error (*ptr_ConfigGetParameter)(m64p_handle, const char *, m64p_type, void *, int);
 #if defined(M64P_CORE_PROTOTYPES)
@@ -141,7 +141,7 @@ EXPORT m64p_error CALL ConfigGetParameter(m64p_handle, const char *, m64p_type, 
 
 /* ConfigGetParameterType()
  *
- * This function retrieves the type of one of the emulator's parameters. 
+ * This function retrieves the type of one of the emulator's parameters.
  */
 typedef m64p_error (*ptr_ConfigGetParameterType)(m64p_handle, const char *, m64p_type *);
 #if defined(M64P_CORE_PROTOTYPES)
@@ -224,7 +224,7 @@ EXPORT const char * CALL ConfigGetUserConfigPath(void);
  *
  * This function may be used by the plugins or front-end to get a path to the
  * directory for storing user-specific data files. This may be used to store
- * files such as screenshots, saved game states, or hi-res textures.
+ * files such as saved game states, or hi-res textures.
  */
 typedef const char * (*ptr_ConfigGetUserDataPath)(void);
 #if defined(M64P_CORE_PROTOTYPES)

@@ -75,7 +75,6 @@
 #endif
 #include "rom.h"
 #include "savestates.h"
-#include "screenshot.h"
 #include "util.h"
 #include "netplay.h"
 
@@ -119,7 +118,6 @@ int g_gs_vi_counter = 0;
 
 /** static (local) variables **/
 static int   l_CurrentFrame = 0;         // frame counter
-static int   l_TakeScreenshot = 0;       // Tell OSD Rendering callback to take a screenshot just before drawing the OSD
 static int   l_SpeedFactor = 100;        // percentage of nominal game speed at which emulator is running
 static int   l_FrameAdvance = 0;         // variable to check if we pause on next frame
 static int   l_MainSpeedLimit = 1;       // insert delay during vi_interrupt to keep speed at real-time
@@ -430,7 +428,6 @@ int main_set_core_defaults(void)
     ConfigSetDefaultBool(g_CoreConfig, "AutoStateSlotIncrement", 0, "Increment the save state slot after each save operation");
     ConfigSetDefaultInt(g_CoreConfig, "CurrentStateSlot", 0, "Save state slot (0-9) to use when saving/loading the emulator state");
     ConfigSetDefaultBool(g_CoreConfig, "EnableDebugger", 0, "Activate the R4300 debugger when ROM execution begins, if core was built with Debugger support");
-    ConfigSetDefaultString(g_CoreConfig, "ScreenshotPath", "", "Path to directory where screenshots are saved. If this is blank, the default value of ${UserDataPath}/screenshot will be used");
     ConfigSetDefaultString(g_CoreConfig, "SaveStatePath", "", "Path to directory where emulator save states (snapshots) are saved. If this is blank, the default value of ${UserDataPath}/save will be used");
     ConfigSetDefaultString(g_CoreConfig, "SaveSRAMPath", "", "Path to directory where SRAM/EEPROM data (in-game saves) are stored. If this is blank, the default value of ${UserDataPath}/save will be used");
     ConfigSetDefaultString(g_CoreConfig, "SharedDataPath", "", "Path to a directory to search when looking for shared data files");
@@ -634,13 +631,6 @@ static void main_draw_volume_osd(void)
     }
 }
 
-/* this function could be called as a result of a keypress, joystick/button movement,
-   LIRC command, or 'testshots' command-line option timer */
-void main_take_next_screenshot(void)
-{
-    l_TakeScreenshot = l_CurrentFrame + 1;
-}
-
 void main_state_set_slot(int slot)
 {
     if (slot < 0 || slot > 9)
@@ -720,7 +710,7 @@ m64p_error main_core_state_query(m64p_core_param param, int *rval)
         case M64CORE_AUDIO_VOLUME:
         {
             if (!g_EmulatorRunning)
-                return M64ERR_INVALID_STATE;    
+                return M64ERR_INVALID_STATE;
             return main_volume_get_level(rval);
         }
         case M64CORE_AUDIO_MUTE:
@@ -730,7 +720,6 @@ m64p_error main_core_state_query(m64p_core_param param, int *rval)
             *rval = event_gameshark_active();
             break;
         // these are only used for callbacks; they cannot be queried or set
-        case M64CORE_SCREENSHOT_CAPTURED:
         case M64CORE_STATE_LOADCOMPLETE:
         case M64CORE_STATE_SAVECOMPLETE:
             return M64ERR_INPUT_INVALID;
@@ -749,7 +738,7 @@ m64p_error main_core_state_set(m64p_core_param param, int val)
             if (!g_EmulatorRunning)
                 return M64ERR_INVALID_STATE;
             if (val == M64EMU_STOPPED)
-            {        
+            {
                 /* this stop function is asynchronous.  The emulator may not terminate until later */
                 main_stop();
                 return M64ERR_SUCCESS;
@@ -761,7 +750,7 @@ m64p_error main_core_state_set(m64p_core_param param, int val)
                 return M64ERR_SUCCESS;
             }
             else if (val == M64EMU_PAUSED)
-            {    
+            {
                 if (!main_is_paused())
                     main_toggle_pause();
                 return M64ERR_SUCCESS;
@@ -916,20 +905,6 @@ static void video_plugin_render_callback(int bScreenRedrawn)
 #ifdef M64P_OSD
     int bOSD = ConfigGetParamBool(g_CoreConfig, "OnScreenDisplay");
 #endif /* M64P_OSD */
-
-    // if the flag is set to take a screenshot, then grab it now
-    if (l_TakeScreenshot != 0)
-    {
-        // if the OSD is enabled, and the screen has not been recently redrawn, then we cannot take a screenshot now because
-        // it contains the OSD text.  Wait until the next redraw
-#ifdef M64P_OSD
-        if (!bOSD || bScreenRedrawn)
-#endif /* M64P_OSD */
-        {
-            TakeScreenshot(l_TakeScreenshot - 1);  // current frame number +1 is in l_TakeScreenshot
-            l_TakeScreenshot = 0; // reset flag
-        }
-    }
 
 #ifdef M64P_OSD
     // if the OSD is enabled, then draw it now
@@ -1391,7 +1366,7 @@ static int load_dd_disk(struct dd_disk* dd_disk, const struct storage_backend_in
     if (dd_disk->format == DISK_FORMAT_SDK) {
         swap_buffer(&w, sizeof(w), 1);
     }
-    
+
     /* Set region in dd_disk */
     if (w == DD_REGION_DV || development) {
         dd_disk->region = DDREGION_DEV;
@@ -1950,7 +1925,7 @@ m64p_error main_run(void)
         osd_init(width, height);
     }
 
-    // setup rendering callback from video plugin to the core, for screenshots and On-Screen-Display
+    // setup rendering callback from video plugin to the core, for On-Screen-Display
     gfx.setRenderingCallback(video_plugin_render_callback);
 
 #ifdef WITH_LIRC

@@ -93,7 +93,6 @@ static m64p_handle l_CoreEventsConfig = NULL;
 #define kbdReset "Kbd Mapping Reset"
 #define kbdSpeeddown "Kbd Mapping Speed Down"
 #define kbdSpeedup "Kbd Mapping Speed Up"
-#define kbdScreenshot "Kbd Mapping Screenshot"
 #define kbdMute "Kbd Mapping Mute"
 #define kbdIncrease "Kbd Mapping Increase Volume"
 #define kbdDecrease "Kbd Mapping Decrease Volume"
@@ -111,7 +110,6 @@ typedef enum {joyFullscreen,
               joyReset,
               joySpeedDown,
               joySpeedUp,
-              joyScreenshot,
               joyMute,
               joyIncrease,
               joyDecrease,
@@ -130,7 +128,6 @@ static const char *JoyCmdName[] = { "Joy Mapping Fullscreen",
                                     "Joy Mapping Reset",
                                     "Joy Mapping Speed Down",
                                     "Joy Mapping Speed Up",
-                                    "Joy Mapping Screenshot",
                                     "Joy Mapping Mute",
                                     "Joy Mapping Increase Volume",
                                     "Joy Mapping Decrease Volume",
@@ -174,20 +171,20 @@ static int MatchJoyCommand(const SDL_Event *event, eJoyCommand cmd)
     char tokenized_event_str[128];
     strncpy(tokenized_event_str, multi_event_str, 127);
     tokenized_event_str[127] = '\0';
-    
+
     /* Iterate over comma-separated config phrases */
     char *phrase_str = strtok(tokenized_event_str, ",");
     while (phrase_str != NULL)
     {
         int iHotkey, has_hotkey = 0;
-        
+
         /* Check for invalid phrase */
         if (strlen(phrase_str) < 4 || phrase_str[0] != 'J')
         {
             phrase_str = strtok(NULL, ",");
             continue;
         }
-        
+
         /* Get device (joystick) number */
         if (phrase_str[1] == '*')
         {
@@ -284,7 +281,7 @@ static int MatchJoyCommand(const SDL_Event *event, eJoyCommand cmd)
                     break;
             }
         } /* Iterate over JoyAction/JoyHotkey action fields */
-        
+
         /* Detect changes in command activation status */
         const int new_cmd_value = (JoyCmdActive[cmd][1] << 1) | JoyCmdActive[cmd][0];
         const int active_mask = has_hotkey ? 3 : 1;
@@ -398,8 +395,6 @@ static int SDLCALL event_sdl_filter(void *userdata, SDL_Event *event)
                         main_speeddown(5);
                     else if (cmd == joySpeedUp)
                         main_speedup(5);
-                    else if (cmd == joyScreenshot)
-                        main_take_next_screenshot();
                     else if (cmd == joyMute)
                         main_volume_mute();
                     else if (cmd == joyDecrease)
@@ -499,7 +494,7 @@ void event_initialize(void)
                         SDL_JoystickOpen(device);
 #endif
                 }
-                
+
                 phrase_str = strtok(NULL, ",");
             } /* Iterate over comma-separated config phrases */
         }
@@ -512,7 +507,7 @@ void event_initialize(void)
     SDL_EnableKeyRepeat(0, 0);
 #endif
     SDL_SetEventFilter(event_sdl_filter, NULL);
-    
+
 #if defined(WIN32) && !SDL_VERSION_ATLEAST(1,3,0)
     SDL_EventState(SDL_SYSWMEVENT, SDL_ENABLE);
 
@@ -576,7 +571,6 @@ int event_set_core_defaults(void)
     ConfigSetDefaultInt(l_CoreEventsConfig, kbdReset, sdl_native2keysym(SDL_SCANCODE_F9),             "SDL keysym for resetting the emulator");
     ConfigSetDefaultInt(l_CoreEventsConfig, kbdSpeeddown, sdl_native2keysym(SDL_SCANCODE_F10),        "SDL keysym for slowing down the emulator");
     ConfigSetDefaultInt(l_CoreEventsConfig, kbdSpeedup, sdl_native2keysym(SDL_SCANCODE_F11),          "SDL keysym for speeding up the emulator");
-    ConfigSetDefaultInt(l_CoreEventsConfig, kbdScreenshot, sdl_native2keysym(SDL_SCANCODE_F12),       "SDL keysym for taking a screenshot");
     ConfigSetDefaultInt(l_CoreEventsConfig, kbdPause, sdl_native2keysym(SDL_SCANCODE_P),              "SDL keysym for pausing the emulator");
     ConfigSetDefaultInt(l_CoreEventsConfig, kbdMute, sdl_native2keysym(SDL_SCANCODE_M),               "SDL keysym for muting/unmuting the sound");
     ConfigSetDefaultInt(l_CoreEventsConfig, kbdIncrease, sdl_native2keysym(SDL_SCANCODE_RIGHTBRACKET),"SDL keysym for increasing the volume");
@@ -594,7 +588,6 @@ int event_set_core_defaults(void)
     ConfigSetDefaultString(l_CoreEventsConfig, JoyCmdName[joyReset], "",      "Joystick event string for resetting the emulator");
     ConfigSetDefaultString(l_CoreEventsConfig, JoyCmdName[joySpeedDown], "",  "Joystick event string for slowing down the emulator");
     ConfigSetDefaultString(l_CoreEventsConfig, JoyCmdName[joySpeedUp], "",    "Joystick event string for speeding up the emulator");
-    ConfigSetDefaultString(l_CoreEventsConfig, JoyCmdName[joyScreenshot], "", "Joystick event string for taking a screenshot");
     ConfigSetDefaultString(l_CoreEventsConfig, JoyCmdName[joyPause], "",      "Joystick event string for pausing the emulator");
     ConfigSetDefaultString(l_CoreEventsConfig, JoyCmdName[joyMute], "",       "Joystick event string for muting/unmuting the sound");
     ConfigSetDefaultString(l_CoreEventsConfig, JoyCmdName[joyIncrease], "",   "Joystick event string for increasing the volume");
@@ -656,8 +649,6 @@ void event_sdl_keydown(int keysym, int keymod)
         main_speedlimiter_toggle();
     else if (keysym == sdl_keysym2native(ConfigGetParamInt(l_CoreEventsConfig, kbdSpeedup)))
         main_speedup(5);
-    else if (keysym == sdl_keysym2native(ConfigGetParamInt(l_CoreEventsConfig, kbdScreenshot)))
-        main_take_next_screenshot();    /* screenshot will be taken at the end of frame rendering */
     else if (keysym == sdl_keysym2native(ConfigGetParamInt(l_CoreEventsConfig, kbdPause)))
         main_toggle_pause();
     else if (keysym == sdl_keysym2native(ConfigGetParamInt(l_CoreEventsConfig, kbdMute)))

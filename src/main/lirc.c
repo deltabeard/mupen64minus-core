@@ -100,8 +100,6 @@ void lircCheckInput(void)
                     main_volume_up();
                 else if(strcmp(c, "VOL-") == 0)
                     main_volume_down();
-                else if(strcmp(c, "SCREENSHOT") == 0)
-                    main_take_next_screenshot();
                 else if(strcmp(c, "SPEED+") == 0)
                     main_speedup(5);
                 else if(strcmp(c, "SPEED-") == 0)

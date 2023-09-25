@@ -44,7 +44,6 @@
 #include "main/util.h"
 #include "main/version.h"
 #include "main/workqueue.h"
-#include "main/screenshot.h"
 #include "main/netplay.h"
 #include "plugin/plugin.h"
 #include "vidext.h"
@@ -186,7 +185,6 @@ EXPORT m64p_error CALL CoreDoCommand(m64p_command Command, int ParamInt, void *P
             if (rval == M64ERR_SUCCESS)
             {
                 l_ROMOpen = 1;
-                ScreenshotRomOpen();
                 cheat_init(&g_cheat_ctx);
             }
             return rval;
@@ -206,7 +204,6 @@ EXPORT m64p_error CALL CoreDoCommand(m64p_command Command, int ParamInt, void *P
             if (rval == M64ERR_SUCCESS)
             {
                 l_DiskOpen = 1;
-                ScreenshotRomOpen();
                 cheat_init(&g_cheat_ctx);
             }
             return rval;
@@ -316,11 +313,6 @@ EXPORT m64p_error CALL CoreDoCommand(m64p_command Command, int ParamInt, void *P
             return M64ERR_SUCCESS;
         case M64CMD_SET_FRAME_CALLBACK:
             *(void**)&g_FrameCallback = ParamPtr;
-            return M64ERR_SUCCESS;
-        case M64CMD_TAKE_NEXT_SCREENSHOT:
-            if (!g_EmulatorRunning)
-                return M64ERR_INVALID_STATE;
-            main_take_next_screenshot();
             return M64ERR_SUCCESS;
         case M64CMD_READ_SCREEN:
             if (!g_EmulatorRunning)
