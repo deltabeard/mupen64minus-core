@@ -30,9 +30,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
-#include <zlib.h>
-#include <unzip.h>
-#include <zip.h>
 
 #define M64P_CORE_PROTOTYPES 1
 #include "api/callbacks.h"
@@ -185,6 +182,11 @@ static void savestates_clear_job(void)
 #define PUTDATA(buff, type, value) \
     do { type x = value; PUTARRAY(&x, buff, type, 1); } while(0)
 
+static int savestates_load_m64p(struct device* dev, char *filepath)
+{
+	return 0;
+}
+#if 0
 static int savestates_load_m64p(struct device* dev, char *filepath)
 {
     unsigned char header[44];
@@ -958,6 +960,7 @@ static int savestates_load_m64p(struct device* dev, char *filepath)
     main_message(M64MSG_STATUS, OSD_BOTTOM_LEFT, "State loaded from: %s", namefrompath(filepath));
     return 1;
 }
+#endif
 
 static int savestates_load_pj64(struct device* dev,
                                 char *filepath, void *handle,
@@ -1302,6 +1305,7 @@ static int savestates_load_pj64(struct device* dev,
     return 1;
 }
 
+#if 0
 static int read_data_from_zip(void *zip, void *buffer, size_t length)
 {
     int err = unzReadCurrentFile((unzFile)zip, buffer, (unsigned)length);
@@ -1337,6 +1341,7 @@ static int savestates_load_pj64_zip(struct device* dev, char *filepath)
             unzClose(zipstatefile);
         return ret;
 }
+#endif
 
 static int read_data_from_file(void *file, void *buffer, size_t length)
 {
@@ -1462,7 +1467,7 @@ int savestates_load(void)
         switch (type)
         {
             case savestates_type_m64p: ret = savestates_load_m64p(dev, filepath); break;
-            case savestates_type_pj64_zip: ret = savestates_load_pj64_zip(dev, filepath); break;
+            //case savestates_type_pj64_zip: ret = savestates_load_pj64_zip(dev, filepath); break;
             case savestates_type_pj64_unc: ret = savestates_load_pj64_unc(dev, filepath); break;
             default: ret = 0; break;
         }
@@ -1478,6 +1483,7 @@ int savestates_load(void)
     return ret;
 }
 
+#if 0
 static void savestates_save_m64p_work(struct work_struct *work)
 {
     gzFile f;
@@ -1920,6 +1926,7 @@ static int savestates_save_m64p(const struct device* dev, char *filepath)
 
     return 1;
 }
+#endif
 
 static int savestates_save_pj64(const struct device* dev,
                                 char *filepath, void *handle,
@@ -2091,6 +2098,7 @@ static int savestates_save_pj64(const struct device* dev,
     return 1;
 }
 
+#if 0
 static int write_data_to_zip(void *zip, const void *buffer, size_t length)
 {
     return zipWriteInFileInZip((zipFile)zip, buffer, (unsigned)length) == ZIP_OK;
@@ -2129,6 +2137,7 @@ static int savestates_save_pj64_zip(const struct device* dev, char *filepath)
         StateChanged(M64CORE_STATE_SAVECOMPLETE, 1);
         return 1;
 }
+#endif
 
 static int write_data_to_file(void *file, const void *buffer, size_t length)
 {
@@ -2183,8 +2192,8 @@ int savestates_save(void)
     {
         switch (type)
         {
-            case savestates_type_m64p: ret = savestates_save_m64p(dev, filepath); break;
-            case savestates_type_pj64_zip: ret = savestates_save_pj64_zip(dev, filepath); break;
+            //case savestates_type_m64p: ret = savestates_save_m64p(dev, filepath); break;
+            //case savestates_type_pj64_zip: ret = savestates_save_pj64_zip(dev, filepath); break;
             case savestates_type_pj64_unc: ret = savestates_save_pj64_unc(dev, filepath); break;
             default: ret = 0; StateChanged(M64CORE_STATE_SAVECOMPLETE, ret); break;
         }

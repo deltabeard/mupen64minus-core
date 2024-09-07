@@ -297,35 +297,6 @@ ifeq ($(origin PKG_CONFIG), undefined)
   endif
 endif
 
-ifeq ($(OS), OSX) # use system zlib on OSX
-  ZLIB_LDLIBS += -lz
-endif
-
-ifeq ($(origin ZLIB_CFLAGS) $(origin ZLIB_LDLIBS), undefined undefined)
-  ifeq ($(shell $(PKG_CONFIG) --modversion zlib 2>/dev/null),)
-    $(error No zlib development libraries found!)
-  endif
-  ZLIB_CFLAGS += $(shell $(PKG_CONFIG) --cflags zlib)
-  ZLIB_LDLIBS +=  $(shell $(PKG_CONFIG) --libs zlib)
-endif
-CFLAGS += $(ZLIB_CFLAGS)
-LDLIBS += $(ZLIB_LDLIBS)
-
-ifeq ($(origin MINIZIP_CFLAGS) $(origin MINIZIP_LDLIBS), undefined undefined)
-  ifeq ($(shell $(PKG_CONFIG) --modversion minizip 2>/dev/null),)
-    CFLAGS += -DNOCRYPT -DNOUNCRYPT -I$(SUBDIR)/minizip
-    MINIZIP_SOURCE = \
-      $(SUBDIR)/minizip/ioapi.c \
-      $(SUBDIR)/minizip/zip.c \
-      $(SUBDIR)/minizip/unzip.c
-  else
-    MINIZIP_CFLAGS = $(shell $(PKG_CONFIG) --cflags minizip)
-    MINIZIP_LDLIBS =  $(shell $(PKG_CONFIG) --libs minizip)
-  endif
-endif
-CFLAGS += $(MINIZIP_CFLAGS)
-LDLIBS += $(MINIZIP_LDLIBS)
-
 ifeq ($(OPENCV), 1)
   # OpenCV lib
   ifeq ($(origin OPENCV_CFLAGS) $(origin OPENCV_LDLIBS), undefined undefined)
@@ -593,8 +564,7 @@ SOURCE = \
     $(SRCDIR)/plugin/dummy_video.c \
     $(SRCDIR)/plugin/dummy_audio.c \
     $(SRCDIR)/plugin/dummy_input.c \
-    $(SRCDIR)/plugin/dummy_rsp.c \
-    $(MINIZIP_SOURCE)
+    $(SRCDIR)/plugin/dummy_rsp.c
 
 # MD5 lib
 SOURCE += \
