@@ -152,12 +152,7 @@ jobs:
     runs-on: macos-13
     steps:
       - uses: actions/checkout@v4
-      - uses: libsdl-org/setup-sdl@main
-        id: sdl
-        with:
-          install-linux-dependencies: true
-          version: 2-latest
-          version-sdl-image: 2-latest
+      - run: brew install sdl2
       - name: Build and related stuff, backup binaries
         run: make  -C projects/unix/ OS=MINGW OSD=0 VULKAN=0 NETPLAY=0 OPENCV=0 V=1 OPTFLAGS="-Og -DXXH_NO_INLINE_HINTS" WARNFLAGS="" DEBUG=1 DEBUGGER=0 all 
       - name: Upload artifact
