@@ -154,7 +154,7 @@ jobs:
       - uses: actions/checkout@v4
       - run: brew install sdl2
       - name: Build and related stuff, backup binaries
-        run: make  -C projects/unix/ OS=MINGW OSD=0 VULKAN=0 NETPLAY=0 OPENCV=0 V=1 OPTFLAGS="-Og -DXXH_NO_INLINE_HINTS" WARNFLAGS="" DEBUG=1 DEBUGGER=0 all 
+        run: make  -C projects/unix/ OS=OSX OSD=0 VULKAN=0 NETPLAY=0 OPENCV=0 V=1 OPTFLAGS="-Og -DXXH_NO_INLINE_HINTS" WARNFLAGS="" DEBUG=1 DEBUGGER=0 all 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
