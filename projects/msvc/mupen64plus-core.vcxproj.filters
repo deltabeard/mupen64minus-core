@@ -103,9 +103,6 @@
     <Filter Include="subprojects\md5">
       <UniqueIdentifier>{8eff5a55-cd16-4582-97bf-7eb08afe59bc}</UniqueIdentifier>
     </Filter>
-    <Filter Include="subprojects\minizip">
-      <UniqueIdentifier>{11be67bc-8d5a-4efd-aefb-31bbeec5aad8}</UniqueIdentifier>
-    </Filter>
     <Filter Include="subprojects\oglft">
       <UniqueIdentifier>{16a4986e-7be6-4bd3-8cd4-ef7370155db4}</UniqueIdentifier>
     </Filter>
@@ -160,9 +157,6 @@
       <Filter>main</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\main\savestates.c">
-      <Filter>main</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\main\screenshot.c">
       <Filter>main</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\main\sdl_key_converter.c">
@@ -405,15 +399,6 @@
     <ClCompile Include="..\..\subprojects\oglft\OGLFT.cpp">
       <Filter>subprojects\oglft</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\subprojects\minizip\ioapi.c">
-      <Filter>subprojects\minizip</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\subprojects\minizip\unzip.c">
-      <Filter>subprojects\minizip</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\subprojects\minizip\zip.c">
-      <Filter>subprojects\minizip</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\device\r4300\new_dynarec\recomp_dbg.c">
       <Filter>device\r4300\new_dynarec</Filter>
     </ClCompile>
@@ -423,6 +408,7 @@
     <ClCompile Include="..\..\src\device\r4300\new_dynarec\arm64\assem_arm64.c">
       <Filter>device\r4300\new_dynarec\arm64</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\device\r4300\cp2.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\api\callbacks.h">
@@ -483,9 +469,6 @@
       <Filter>main</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\main\savestates.h">
-      <Filter>main</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\main\screenshot.h">
       <Filter>main</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\main\sdl_key_converter.h">
@@ -752,18 +735,6 @@
     <ClInclude Include="..\..\subprojects\xxhash\xxhash.h">
       <Filter>subprojects\xxhash</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\subprojects\minizip\crypt.h">
-      <Filter>subprojects\minizip</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\subprojects\minizip\ioapi.h">
-      <Filter>subprojects\minizip</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\subprojects\minizip\unzip.h">
-      <Filter>subprojects\minizip</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\subprojects\minizip\zip.h">
-      <Filter>subprojects\minizip</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\device\r4300\new_dynarec\x64\assem_x64.h">
       <Filter>device\r4300\new_dynarec\x64</Filter>
     </ClInclude>
@@ -773,6 +744,7 @@
     <ClInclude Include="..\..\src\device\dd\disk.h">
       <Filter>device\dd</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\device\r4300\cp2.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\src\device\r4300\mips_instructions.def">

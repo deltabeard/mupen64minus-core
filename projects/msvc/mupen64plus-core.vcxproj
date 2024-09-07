@@ -155,7 +155,6 @@
     <ClCompile Include="..\..\src\main\netplay.c" />
     <ClCompile Include="..\..\src\main\rom.c" />
     <ClCompile Include="..\..\src\main\savestates.c" />
-    <ClCompile Include="..\..\src\main\screenshot.c" />
     <ClCompile Include="..\..\src\main\sdl_key_converter.c" />
     <ClCompile Include="..\..\src\main\util.c" />
     <ClCompile Include="..\..\src\main\workqueue.c" />
@@ -372,9 +371,6 @@
     <ClCompile Include="..\..\src\device\pif\n64_cic_nus_6105.c" />
     <ClCompile Include="..\..\src\device\pif\pif.c" />
     <ClCompile Include="..\..\subprojects\md5\md5.c" />
-    <ClCompile Include="..\..\subprojects\minizip\ioapi.c" />
-    <ClCompile Include="..\..\subprojects\minizip\unzip.c" />
-    <ClCompile Include="..\..\subprojects\minizip\zip.c" />
     <ClCompile Include="..\..\subprojects\oglft\OGLFT.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -462,7 +458,6 @@
     <ClInclude Include="..\..\src\main\netplay.h" />
     <ClInclude Include="..\..\src\main\rom.h" />
     <ClInclude Include="..\..\src\main\savestates.h" />
-    <ClInclude Include="..\..\src\main\screenshot.h" />
     <ClInclude Include="..\..\src\main\sdl_key_converter.h" />
     <ClInclude Include="..\..\src\main\util.h" />
     <ClInclude Include="..\..\src\main\version.h" />
@@ -663,10 +658,6 @@
     <ClInclude Include="..\..\src\device\pif\n64_cic_nus_6105.h" />
     <ClInclude Include="..\..\src\device\pif\pif.h" />
     <ClInclude Include="..\..\subprojects\md5\md5.h" />
-    <ClInclude Include="..\..\subprojects\minizip\crypt.h" />
-    <ClInclude Include="..\..\subprojects\minizip\ioapi.h" />
-    <ClInclude Include="..\..\subprojects\minizip\unzip.h" />
-    <ClInclude Include="..\..\subprojects\minizip\zip.h" />
     <ClInclude Include="..\..\subprojects\oglft\OGLFT.h" />
     <ClInclude Include="..\..\subprojects\xxhash\xxhash.h" />
   </ItemGroup>
