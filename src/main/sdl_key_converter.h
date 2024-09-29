@@ -19,7 +19,7 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.          *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include <SDL.h>
+//#include <SDL.h>
 #include <stdint.h>
 
 #include "osal/preproc.h"
@@ -27,7 +27,7 @@
 uint16_t sdl_keysym2scancode(uint16_t keysym);
 uint16_t sdl_scancode2keysym(uint16_t scancode);
 
-#if SDL_VERSION_ATLEAST(1,3,0)
+#if 0
 
 static osal_inline uint16_t sdl_keysym2native(uint16_t keysym)
 {

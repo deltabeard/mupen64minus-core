@@ -25,6 +25,7 @@
 
 #define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
 
+#if 0
 uint16_t sdl_keysym2scancode(uint16_t keysym)
 {
     static const uint16_t keysym2scancode[323] = {
@@ -652,3 +653,4 @@ uint16_t sdl_scancode2keysym(uint16_t scancode)
         return 0;
     return scancode2keysym[scancode];
 }
+#endif

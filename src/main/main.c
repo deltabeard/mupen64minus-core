@@ -28,7 +28,7 @@
  * if you want to implement an interface, you should look here
  */
 
-#include <SDL.h>
+//#include <SDL.h>
 #include <assert.h>
 #include <stdarg.h>
 #include <stddef.h>
@@ -381,7 +381,6 @@ static void main_check_inputs(void)
 #ifdef WITH_LIRC
     lircCheckInput();
 #endif
-    SDL_PumpEvents();
 }
 
 /*********************************************************************************************************
@@ -551,7 +550,7 @@ void main_speedlimiter_toggle(void)
     if (l_MainSpeedLimit) /* fix naturally occuring audio desync */
     {
         main_toggle_pause();
-        SDL_Delay(1000);
+        //SDL_Delay(1000);
         main_toggle_pause();
         main_message(M64MSG_STATUS, OSD_BOTTOM_LEFT, "Speed limiter enabled");
     }
@@ -943,7 +942,7 @@ static void apply_speed_limiter(void)
     static int lastSpeedFactor = 100;
     static unsigned int StartFPSTime = 0;
     static const double defaultSpeedFactor = 100.0;
-    unsigned int CurrentFPSTime = SDL_GetTicks();
+    unsigned int CurrentFPSTime = 0; //SDL_GetTicks();
 
     // calculate frame duration based upon ROM setting (50/60hz) and mupen64plus speed adjustment
     const double VILimitMilliseconds = 1000.0 / g_dev.vi.expected_refresh_rate;
@@ -991,9 +990,9 @@ static void apply_speed_limiter(void)
     if(l_MainSpeedLimit && sleepTime > 0 && sleepTime < maxSleepNeeded*SpeedFactorMultiple)
     {
         while(sleepTime >= 0) {
-            SDL_Delay((unsigned int) sleepTime);
+            //SDL_Delay((unsigned int) sleepTime);
 
-            CurrentFPSTime = SDL_GetTicks();
+            CurrentFPSTime = 0; //SDL_GetTicks();
             elapsedRealTime = CurrentFPSTime - StartFPSTime;
             sleepTime = totalElapsedGameTime - elapsedRealTime;
         }
@@ -1030,7 +1029,7 @@ static void pause_loop(void)
         VidExt_GL_SwapBuffers();
         while(g_rom_pause)
         {
-            SDL_Delay(10);
+            //SDL_Delay(10);
             main_check_inputs();
         }
     }

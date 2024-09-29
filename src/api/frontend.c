@@ -24,7 +24,7 @@
  * outside of the core library.
  */
 
-#include <SDL.h>
+//#include <SDL.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -61,9 +61,6 @@ EXPORT m64p_error CALL CoreStartup(int APIVersion, const char *ConfigPath, const
 {
     if (l_CoreInit)
         return M64ERR_ALREADY_INIT;
-
-    /* check wether the caller has already initialized SDL */
-    l_CallerUsingSDL = (SDL_WasInit(0) != 0);
 
     /* very first thing is to set the callback functions for debug info and state changing*/
     SetDebugCallback(DebugCallback, Context);
@@ -121,10 +118,6 @@ EXPORT m64p_error CALL CoreShutdown(void)
     ConfigShutdown();
     workqueue_shutdown();
     savestates_deinit();
-
-    /* if the calling code is using SDL, don't shut it down */
-    if (!l_CallerUsingSDL)
-        SDL_Quit();
 
     /* deallocate base memory */
     release_mem_base(g_mem_base);

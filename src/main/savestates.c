@@ -22,7 +22,7 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.          *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include <SDL.h>
+//#include <SDL.h>
 #include <SDL_thread.h>
 #include <stddef.h>
 #include <stdint.h>
