@@ -1308,6 +1308,8 @@ static int load_dd_disk(struct dd_disk* dd_disk, const struct storage_backend_in
     }
     else {
         fstorage->data = new_data;
+        if (format == DISK_FORMAT_D64)
+            fstorage->size = offset_ram + size_ram;
     }
 
     /* Load RAM save data (if SaveDiskFormat == 1) */
@@ -1494,6 +1496,10 @@ static void init_gb_ram(void* opaque, size_t ram_size, void** storage, const str
     else if (err == file_read_error) {
         DebugMessage(M64MSG_WARNING, "Size mismatch between expected RAM size and effective file size");
     }
+
+    /* Game Boy emulators append extra data to cartridge RAM files,
+     * like the MBC3 RTC state, so don't truncate it */
+    data->ram_fstorage.keep_trailing_data = 1;
 
     DebugMessage(M64MSG_INFO, "GB Loader RAM: %s - %zu",
             data->ram_fstorage.filename,
@@ -1798,6 +1804,7 @@ m64p_error main_run(void)
                 else if (l_ipaks[k] == &g_imempak) {
                     mpk_storages[i].data = mpk.data + i * MEMPAK_SIZE;
                     mpk_storages[i].size = MEMPAK_SIZE;
+                    mpk_storages[i].offset = i * MEMPAK_SIZE;
                     mpk_storages[i].filename = (void*)&mpk; /* OK for isubfile_storage */
 
                     init_mempak(&g_dev.mempaks[i], &mpk_storages[i], &g_isubfile_storage);

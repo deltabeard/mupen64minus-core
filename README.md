@@ -29,7 +29,7 @@ as well as a user interface program (called a front-end).
 
 **Binary Package Requirements**
 
-  - SDL 1.2 or 2.0
+  - SDL 2
   - libpng
   - freetype 2
   - zlib 
@@ -195,7 +195,6 @@ editing the __*~/.config/mupen64plus/mupen64plus.cfg*__ file.  They are:
 - **F9** Reset emulator
 - **F10** Slow down emulator by 5%
 - **F11** Speed up emulator by 5%
-- **F12** Take screenshot
 - **Alt-Enter** Toggle between windowed and fullscreen (may not be supported by all video plugins)
 - **p or P** Pause on/off
 - **m or M** Mute/unmute sound

@@ -77,6 +77,9 @@ EXPORT m64p_error CALL CoreStartup(int APIVersion, const char *ConfigPath, const
         return M64ERR_INCOMPATIBLE;
     }
 
+    /* Initialize the main device structure to all zeros */
+    memset(&g_dev, 0, sizeof(struct device));
+
     /* set up the default (dummy) plugins */
     plugin_connect(M64PLUGIN_GFX, NULL);
     plugin_connect(M64PLUGIN_AUDIO, NULL);
@@ -129,6 +132,9 @@ EXPORT m64p_error CALL CoreShutdown(void)
     /* deallocate base memory */
     release_mem_base(g_mem_base);
     g_mem_base = NULL;
+
+    /* deallocate rom memory */
+    release_mem_rom();
 
     l_CoreInit = 0;
     return M64ERR_SUCCESS;

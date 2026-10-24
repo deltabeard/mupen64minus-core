@@ -79,8 +79,6 @@ void main_speeddown(int percent);
 void main_set_fastforward(int enable);
 void main_speedlimiter_toggle(void);
 
-void main_take_next_screenshot(void);
-
 void main_state_set_slot(int slot);
 void main_state_inc_slot(void);
 void main_state_load(const char *filename);

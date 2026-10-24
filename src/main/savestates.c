@@ -31,8 +31,8 @@
 #include <string.h>
 #include <sys/types.h>
 #include <zlib.h>
-#include <unzip.h>
-#include <zip.h>
+#include <minizip/unzip.h>
+#include <minizip/zip.h>
 
 #define M64P_CORE_PROTOTYPES 1
 #include "api/callbacks.h"
@@ -185,12 +185,26 @@ static void savestates_clear_job(void)
 #define PUTDATA(buff, type, value) \
     do { type x = value; PUTARRAY(&x, buff, type, 1); } while(0)
 
+static int savestates_queue_has_terminator(const char* queue, size_t size)
+{
+    static const char terminator[4] = { -1, -1, -1, -1 };
+
+    for (size_t offset = 0; offset + sizeof(terminator) <= size; offset += 8)
+    {
+        if (memcmp(queue + offset, terminator, sizeof(terminator)) == 0)
+            return 1;
+    }
+
+    return 0;
+}
+
 static int savestates_load_m64p(struct device* dev, char *filepath)
 {
     unsigned char header[44];
     gzFile f;
     unsigned int version;
     int i;
+    int queue_bytes;
     uint32_t FCR31;
 
     size_t savestateSize;
@@ -264,7 +278,8 @@ static int savestates_load_m64p(struct device* dev, char *filepath)
     if (version == 0x00010000) /* original savestate version */
     {
         if (gzread(f, savestateData, savestateSize) != (int)savestateSize ||
-            (gzread(f, queue, sizeof(queue)) % 4) != 0)
+            (queue_bytes = gzread(f, queue, sizeof(queue))) < 0 ||
+            (queue_bytes % 4) != 0)
         {
             main_message(M64MSG_STATUS, OSD_BOTTOM_LEFT, "Could not read Mupen64Plus savestate 1.0 data from %s", filepath);
             free(savestateData);
@@ -285,6 +300,7 @@ static int savestates_load_m64p(struct device* dev, char *filepath)
             SDL_UnlockMutex(savestates_lock);
             return 0;
         }
+        queue_bytes = sizeof(queue);
     }
     else // version >= 0x00010200  saves entire eventqueue, 4-byte using_tlb flags and extra state
     {
@@ -299,10 +315,18 @@ static int savestates_load_m64p(struct device* dev, char *filepath)
             SDL_UnlockMutex(savestates_lock);
             return 0;
         }
+        queue_bytes = sizeof(queue);
     }
 
     gzclose(f);
     SDL_UnlockMutex(savestates_lock);
+
+    if (!savestates_queue_has_terminator(queue, queue_bytes))
+    {
+        main_message(M64MSG_STATUS, OSD_BOTTOM_LEFT, "Invalid event queue in savestate: %s", filepath);
+        free(savestateData);
+        return 0;
+    }
 
     // Parse savestate
     dev->rdram.regs[0][RDRAM_CONFIG_REG]       = GETDATA(curr, uint32_t);
@@ -479,7 +503,7 @@ static int savestates_load_m64p(struct device* dev, char *filepath)
 
     // assert(savestateData+savestateSize == curr)
 
-    to_little_endian_buffer(queue, 4, 256);
+    to_little_endian_buffer(queue, 4, queue_bytes / 4);
     load_eventqueue_infos(&dev->r4300.cp0, queue);
 
 #ifdef NEW_DYNAREC
@@ -552,8 +576,8 @@ static int savestates_load_m64p(struct device* dev, char *filepath)
 
             unsigned int enabled = ALIGNED_GETDATA(curr, uint32_t);
             unsigned int bank = ALIGNED_GETDATA(curr, uint32_t);
-            unsigned int access_mode = ALIGNED_GETDATA(curr, uint32_t);
-            unsigned int access_mode_changed = ALIGNED_GETDATA(curr, uint32_t);
+            unsigned int cart_enabled = ALIGNED_GETDATA(curr, uint32_t);
+            unsigned int reset_state = ALIGNED_GETDATA(curr, uint32_t);
             COPYARRAY(gb_fingerprint, curr, uint8_t, GB_CART_FINGERPRINT_SIZE);
             if (gb_fingerprint[0] != 0) {
                 rom_bank = ALIGNED_GETDATA(curr, uint32_t);
@@ -572,8 +596,8 @@ static int savestates_load_m64p(struct device* dev, char *filepath)
                 /* init transferpak state if enabled and not controlled by input plugin */
                 dev->transferpaks[i].enabled = enabled;
                 dev->transferpaks[i].bank = bank;
-                dev->transferpaks[i].access_mode = access_mode;
-                dev->transferpaks[i].access_mode_changed = access_mode_changed;
+                dev->transferpaks[i].cart_enabled = cart_enabled;
+                dev->transferpaks[i].reset_state = reset_state;
 
                 /* if it holds a valid cartridge init gbcart */
                 if (dev->transferpaks[i].gb_cart != NULL
@@ -615,8 +639,9 @@ static int savestates_load_m64p(struct device* dev, char *filepath)
         /* extra pif channels state */
         for (i = 0; i < PIF_CHANNELS_COUNT; ++i) {
             int offset = GETDATA(curr, int8_t);
-            if (offset >= 0) {
-                setup_pif_channel(&dev->pif.channels[i], dev->pif.ram + offset);
+            if (offset >= 0 && offset < PIF_RAM_SIZE) {
+                setup_pif_channel(&dev->pif.channels[i], dev->pif.ram + offset,
+                    PIF_RAM_SIZE - offset);
             }
             else {
                 disable_pif_channel(&dev->pif.channels[i]);
@@ -697,8 +722,8 @@ static int savestates_load_m64p(struct device* dev, char *filepath)
 
             unsigned int enabled = GETDATA(curr, uint32_t);
             unsigned int bank = GETDATA(curr, uint32_t);
-            unsigned int access_mode = GETDATA(curr, uint32_t);
-            unsigned int access_mode_changed = GETDATA(curr, uint32_t);
+            unsigned int cart_enabled = GETDATA(curr, uint32_t);
+            unsigned int reset_state = GETDATA(curr, uint32_t);
             COPYARRAY(gb_fingerprint, curr, uint8_t, GB_CART_FINGERPRINT_SIZE);
             if (gb_fingerprint[0] != 0) {
                 rom_bank = GETDATA(curr, uint32_t);
@@ -717,8 +742,8 @@ static int savestates_load_m64p(struct device* dev, char *filepath)
                 /* init transferpak state if enabled and not controlled by input plugin */
                 dev->transferpaks[i].enabled = enabled;
                 dev->transferpaks[i].bank = bank;
-                dev->transferpaks[i].access_mode = access_mode;
-                dev->transferpaks[i].access_mode_changed = access_mode_changed;
+                dev->transferpaks[i].cart_enabled = cart_enabled;
+                dev->transferpaks[i].reset_state = reset_state;
 
                 /* if it holds a valid cartridge init gbcart */
                 if (dev->transferpaks[i].gb_cart != NULL
@@ -760,8 +785,9 @@ static int savestates_load_m64p(struct device* dev, char *filepath)
         /* extra pif channels state */
         for (i = 0; i < PIF_CHANNELS_COUNT; ++i) {
             int offset = GETDATA(curr, int8_t);
-            if (offset >= 0) {
-                setup_pif_channel(&dev->pif.channels[i], dev->pif.ram + offset);
+            if (offset >= 0 && offset < PIF_RAM_SIZE) {
+                setup_pif_channel(&dev->pif.channels[i], dev->pif.ram + offset,
+                    PIF_RAM_SIZE - offset);
             }
             else {
                 disable_pif_channel(&dev->pif.channels[i]);
@@ -932,7 +958,7 @@ static int savestates_load_m64p(struct device* dev, char *filepath)
          */
         for (i = 0; i < RDRAM_MAX_MODULES_COUNT; ++i) {
             memcpy(dev->rdram.regs[i], dev->rdram.regs[0], RDRAM_REGS_COUNT*sizeof(dev->rdram.regs[0][0]));
-            dev->rdram.regs[i][RDRAM_DEVICE_ID_REG] = ri_address_to_id_field(i * 0x200000) << 2;
+            dev->rdram.regs[i][RDRAM_DEVICE_ID_REG] = ri_address_to_id_field(ri_address(i * 0x200000), 0) << 2;
         }
 
         /* dd state */
@@ -992,6 +1018,12 @@ static int savestates_load_pj64(struct device* dev,
     curr += 4;
 
     SaveRDRAMSize = GETDATA(curr, uint32_t);
+    if (SaveRDRAMSize != 0x400000 && SaveRDRAMSize != RDRAM_MAX_SIZE)
+    {
+        main_message(M64MSG_STATUS, OSD_BOTTOM_LEFT,
+            "Invalid Project64 state RDRAM size.");
+        return 0;
+    }
 
     /* Read the rest of the savestate into memory. */
     savestateSize = SaveRDRAMSize + 0x2754;
@@ -1286,7 +1318,7 @@ static int savestates_load_pj64(struct device* dev,
      */
     for (i = 0; i < (SaveRDRAMSize / 0x200000); ++i) {
         memcpy(dev->rdram.regs[i], dev->rdram.regs[0], RDRAM_REGS_COUNT*sizeof(dev->rdram.regs[0][0]));
-        dev->rdram.regs[i][RDRAM_DEVICE_ID_REG] = ri_address_to_id_field(i * 0x200000) << 2;
+        dev->rdram.regs[i][RDRAM_DEVICE_ID_REG] = ri_address_to_id_field(ri_address(i * 0x200000), 0) << 2;
     }
 
     /* dd state */
@@ -1446,7 +1478,8 @@ int savestates_load(void)
             fPtr = osal_file_open(filepath, "rb"); // can I open this?
         if (fPtr == NULL)
         {
-            main_message(M64MSG_STATUS, OSD_BOTTOM_LEFT, "Failed to open savestate file %s", filepath);
+            if (filepath != NULL)
+                main_message(M64MSG_STATUS, OSD_BOTTOM_LEFT, "Failed to open savestate file %s", filepath);
             if (filepath != NULL)
                 free(filepath);
             filepath = NULL;
@@ -1796,8 +1829,8 @@ static int savestates_save_m64p(const struct device* dev, char *filepath)
     for (i = 0; i < GAME_CONTROLLERS_COUNT; ++i) {
         PUTDATA(curr, uint32_t, dev->transferpaks[i].enabled);
         PUTDATA(curr, uint32_t, dev->transferpaks[i].bank);
-        PUTDATA(curr, uint32_t, dev->transferpaks[i].access_mode);
-        PUTDATA(curr, uint32_t, dev->transferpaks[i].access_mode_changed);
+        PUTDATA(curr, uint32_t, dev->transferpaks[i].cart_enabled);
+        PUTDATA(curr, uint32_t, dev->transferpaks[i].reset_state);
 
         if (dev->transferpaks[i].gb_cart == NULL) {
             uint8_t gb_fingerprint[GB_CART_FINGERPRINT_SIZE];

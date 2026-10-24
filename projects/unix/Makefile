@@ -159,7 +159,7 @@ SUBDIR = ../../subprojects
 # base CFLAGS, LDLIBS, and LDFLAGS
 OPTFLAGS ?= -O3 -flto
 WARNFLAGS ?= -Wall
-CFLAGS += -fno-strict-aliasing -fvisibility=hidden -I$(SRCDIR) -I$(SRCDIR)/asm_defines -DM64P_PARALLEL
+CFLAGS += -fvisibility=hidden -I$(SRCDIR) -I$(SRCDIR)/asm_defines -DM64P_PARALLEL
 CXXFLAGS += -fvisibility-inlines-hidden
 LDLIBS +=  -lm
 
@@ -246,14 +246,12 @@ ifeq ($(OS), OSX)
     endif
   endif
   ifeq ($(CPU), ARM)
-    # assembly compilation not yet supported on macOS with Apple Silicon
-    NO_ASM = 1
-    CFLAGS += -pipe -arch arm64 -mmacosx-version-min=10.16 -isysroot $(OSX_SDK_PATH)
+    CFLAGS += -pipe -arch arm64 -mmacosx-version-min=11.0 -isysroot $(OSX_SDK_PATH)
   endif
 endif
 ifeq ($(OS), MINGW)
   TARGET = mupen64plus$(POSTFIX).dll
-  ifeq ($(CC), clang)
+  ifeq (clang, $(word 1, $(shell $(CC) --version)))
     LDFLAGS += -shared -Wl,-export-all-symbols
   else
     LDFLAGS += -Wl,-Bsymbolic -shared -Wl,-export-all-symbols
@@ -313,7 +311,7 @@ LDLIBS += $(ZLIB_LDLIBS)
 
 ifeq ($(origin MINIZIP_CFLAGS) $(origin MINIZIP_LDLIBS), undefined undefined)
   ifeq ($(shell $(PKG_CONFIG) --modversion minizip 2>/dev/null),)
-    CFLAGS += -DNOCRYPT -DNOUNCRYPT -I$(SUBDIR)/minizip
+    CFLAGS += -DNOCRYPT -DNOUNCRYPT -I$(SUBDIR)
     MINIZIP_SOURCE = \
       $(SUBDIR)/minizip/ioapi.c \
       $(SUBDIR)/minizip/zip.c \
@@ -329,11 +327,20 @@ LDLIBS += $(MINIZIP_LDLIBS)
 ifeq ($(OPENCV), 1)
   # OpenCV lib
   ifeq ($(origin OPENCV_CFLAGS) $(origin OPENCV_LDLIBS), undefined undefined)
-    ifeq ($(shell $(PKG_CONFIG) --modversion opencv 2>/dev/null),)
-      $(error No OpenCV development libraries found!)
+    ifeq ($(shell $(PKG_CONFIG) --modversion opencv5 2>/dev/null),)
+      ifeq ($(shell $(PKG_CONFIG) --modversion opencv4 2>/dev/null),)
+        ifeq ($(shell $(PKG_CONFIG) --modversion opencv 2>/dev/null),)
+          $(error No OpenCV development libraries found!)
+        endif
+        OPENCV_VER = opencv
+      else
+        OPENCV_VER = opencv4
+      endif
+    else
+      OPENCV_VER = opencv5
     endif
-    OPENCV_CFLAGS += $(shell $(PKG_CONFIG) --cflags opencv)
-    OPENCV_LDLIBS += $(shell $(PKG_CONFIG) --libs opencv)
+    OPENCV_CFLAGS += $(shell $(PKG_CONFIG) --cflags $(OPENCV_VER))
+    OPENCV_LDLIBS += $(shell $(PKG_CONFIG) --libs $(OPENCV_VER))
   endif
   CFLAGS += $(OPENCV_CFLAGS)
   LDLIBS += $(OPENCV_LDLIBS)
@@ -341,26 +348,18 @@ endif
 
 # test for presence of SDL
 ifeq ($(origin SDL_CFLAGS) $(origin SDL_LDLIBS), undefined undefined)
-  SDL_CONFIG = $(CROSS_COMPILE)sdl2-config
-  ifeq ($(shell which $(SDL_CONFIG) 2>/dev/null),)
-    SDL_CONFIG = $(CROSS_COMPILE)sdl-config
-    ifeq ($(shell which $(SDL_CONFIG) 2>/dev/null),)
-      $(error No SDL development libraries found!)
-    else
-      ifeq ($(NETPLAY), 1)
-        SDL_LDLIBS += -lSDL_net
-      endif
-      # SDL1 doesn't support vulkan
-      VULKAN = 0
-      $(warning Using SDL 1.2 libraries)
-    endif
-  else
-    ifeq ($(NETPLAY), 1)
-      SDL_LDLIBS += -lSDL2_net
-    endif
+  ifeq ($(shell $(PKG_CONFIG) --modversion sdl2 2>/dev/null),)
+    $(error No SDL2 development libraries found!)
   endif
-  SDL_CFLAGS  += $(shell $(SDL_CONFIG) --cflags)
-  SDL_LDLIBS += $(shell $(SDL_CONFIG) --libs)
+  ifeq ($(NETPLAY), 1)
+    ifeq ($(shell $(PKG_CONFIG) --modversion SDL2_net 2>/dev/null),)
+      $(error No SDL2_net development libraries found!)
+    endif
+    SDL_CFLAGS += $(shell $(PKG_CONFIG) --cflags SDL2_net)
+    SDL_LDLIBS += $(shell $(PKG_CONFIG) --libs SDL2_net)
+  endif
+  SDL_CFLAGS += $(shell $(PKG_CONFIG) --cflags sdl2)
+  SDL_LDLIBS += $(shell $(PKG_CONFIG) --libs sdl2)
 endif
 CFLAGS += $(SDL_CFLAGS)
 LDLIBS += $(SDL_LDLIBS)
@@ -719,20 +718,38 @@ ifeq ($(DEBUGGER), 1)
     $(SRCDIR)/debugger/dbg_decoder.c \
     $(SRCDIR)/debugger/dbg_memory.c \
     $(SRCDIR)/debugger/dbg_breakpoints.c
-  LDLIBS += -lopcodes -lbfd
 
-  # UGLY libopcodes/libbfd version check (we check for >= 2.28 and >= 2.39)
-  LIBOPCODES_VERSION := $(shell $(STRINGS) --version | head -n1 | rev | cut -d ' ' -f1 | rev)
-  LIBOPCODES_MAJOR := $(shell echo $(LIBOPCODES_VERSION) | cut -f1 -d.)
-  LIBOPCODES_MINOR := $(shell echo $(LIBOPCODES_VERSION) | cut -f2 -d.)
-  LIBOPCODES_POINT := $(shell echo $(LIBOPCODES_VERSION) | cut -f3 -d. | sed 's/^$$/0/')
-  LIBOPCODES_GE_2_29 := $(shell [ $(LIBOPCODES_MAJOR) -gt 2 -o \( $(LIBOPCODES_MAJOR) -eq 2 -a $(LIBOPCODES_MINOR) -ge 28 \) -o \( $(LIBOPCODES_MAJOR) -eq 2 -a $(LIBOPCODES_MINOR) -eq 28 -a $(LIBOPCODES_POINT) -ge 1 \) ] && echo true)
-  LIBBFD_GE_2_39 := $(shell [ $(LIBOPCODES_MAJOR) -gt 2 -o \( $(LIBOPCODES_MAJOR) -eq 2 -a $(LIBOPCODES_MINOR) -ge 39 \) -o \( $(LIBOPCODES_MAJOR) -eq 2 -a $(LIBOPCODES_MINOR) -eq 39 -a $(LIBOPCODES_POINT) -ge 1 \) ] && echo true)
-  ifeq ($(LIBOPCODES_GE_2_29),true)
-    CFLAGS += -DUSE_LIBOPCODES_GE_2_29
+  # The host disassembler (libopcodes/libbfd, used only by dbg_memory.c's
+  # init_host_disassembler()) is x86-only (it hardcodes bfd_arch_i386) and is
+  # not used by the single-step / memory-read / breakpoint machinery that the
+  # frontend debugger API exposes. On macOS it is doubly useless: dbg_memory.c
+  # already stubs it out on non-x86 hosts, linking -lopcodes/-lbfd is fragile,
+  # and BSD `strings` has no --version flag so the version probe below fails.
+  # Default it off on OSX; allow forcing it off anywhere with
+  # DEBUGGER_NO_DISASM=1.
+  ifeq ($(OS),OSX)
+    DEBUGGER_NO_DISASM ?= 1
   endif
-  ifeq ($(LIBBFD_GE_2_39),true)
-    CFLAGS += -DUSE_LIBBFD_GE_2_39
+  DEBUGGER_NO_DISASM ?= 0
+
+  ifeq ($(DEBUGGER_NO_DISASM),1)
+    CFLAGS += -DNO_HOST_DISASSEMBLER
+  else
+    LDLIBS += -lopcodes -lbfd
+
+    # UGLY libopcodes/libbfd version check (we check for >= 2.28 and >= 2.39)
+    LIBOPCODES_VERSION := $(shell $(STRINGS) --version | head -n1 | rev | cut -d ' ' -f1 | rev)
+    LIBOPCODES_MAJOR := $(shell echo $(LIBOPCODES_VERSION) | cut -f1 -d.)
+    LIBOPCODES_MINOR := $(shell echo $(LIBOPCODES_VERSION) | cut -f2 -d.)
+    LIBOPCODES_POINT := $(shell echo $(LIBOPCODES_VERSION) | cut -f3 -d. | sed 's/^$$/0/')
+    LIBOPCODES_GE_2_29 := $(shell [ $(LIBOPCODES_MAJOR) -gt 2 -o \( $(LIBOPCODES_MAJOR) -eq 2 -a $(LIBOPCODES_MINOR) -ge 28 \) -o \( $(LIBOPCODES_MAJOR) -eq 2 -a $(LIBOPCODES_MINOR) -eq 28 -a $(LIBOPCODES_POINT) -ge 1 \) ] && echo true)
+    LIBBFD_GE_2_39 := $(shell [ $(LIBOPCODES_MAJOR) -gt 2 -o \( $(LIBOPCODES_MAJOR) -eq 2 -a $(LIBOPCODES_MINOR) -ge 39 \) -o \( $(LIBOPCODES_MAJOR) -eq 2 -a $(LIBOPCODES_MINOR) -eq 39 -a $(LIBOPCODES_POINT) -ge 1 \) ] && echo true)
+    ifeq ($(LIBOPCODES_GE_2_29),true)
+      CFLAGS += -DUSE_LIBOPCODES_GE_2_29
+    endif
+    ifeq ($(LIBBFD_GE_2_39),true)
+      CFLAGS += -DUSE_LIBBFD_GE_2_39
+    endif
   endif
 endif
 

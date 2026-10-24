@@ -162,9 +162,6 @@
     <ClCompile Include="..\..\src\main\savestates.c">
       <Filter>main</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\main\screenshot.c">
-      <Filter>main</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\main\sdl_key_converter.c">
       <Filter>main</Filter>
     </ClCompile>
@@ -483,9 +480,6 @@
       <Filter>main</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\main\savestates.h">
-      <Filter>main</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\main\screenshot.h">
       <Filter>main</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\main\sdl_key_converter.h">
